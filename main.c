@@ -20,6 +20,8 @@
 
 int count;
 int distanceSensor1;
+int parkingMode = 0;
+int speedIsSlow = 0;
 void __interrupt() ISR(){
     if(T0IF){ // 8-bit timer interrputs every 1us
         count += 1;
@@ -40,11 +42,10 @@ void __interrupt() ISR(){
 }
 
 void main(){
+    TRISA = 0x11 // ---10001 RA4 set as clock input RA0 set as start parking button input
     PORTA = 0x00; // default 0 for cleaning
     PORTB = 0x00; // default 0 for cleaning 
     
-    GIE = 1;  // Enables all unmasked interrupts
-    T0IE = 1; // Enables the TMR0 interrupt
     T0CS = 0; // Internal instruction cycle clock (CLKOUT)
     T0SE = 0; // Increment on low-to-high transition on RA4/T0CKI pin 
     PSA = 0; // Prescaler is assigned to the Timer0 module
@@ -55,6 +56,26 @@ void main(){
     TMR0 = 0; //timer is set as 0
     
     while(1){
-    // mesafe bilgisi burada kullanılacak
+        if(!parkingMode){ // if Driving mode is active
+            if(RA0 && (speedIsSlow)){ // Enable parking mode
+            __delay_ms(1000);
+                GIE  = 1; // Enables all unmasked interrupts
+                T0IE = 1; // Enables the TMR0 interrupt
+                parkingMode = 1;
+            __delay_ms(1000);
+            }
+        }
+        if(parkingMode && RA0){
+            __delay_ms(1000);
+            GIE  = 0; // Enables all unmasked interrupts
+            T0IE = 0; // Enables the TMR0 interrupt
+            TMR0 = 0; //timer is set as 0
+            parkingMode = 0;
+            __delay_ms(1000);
+            }
+        if(parkingMode && !RA0){
+            
+        }
+    // mesafe bilgisi burada kullanılacak    
     }
 }
